@@ -1,0 +1,59 @@
+{
+  "name": "astroswag",
+  "displayName": "AstroSwag - Swagger Annotations",
+  "description": "Automatically generate OpenAPI/Swagger annotations for your code with ease. Speed up API documentation with intelligent annotation generation.",
+  "version": "1.0.2",
+  "publisher": "YassineMANAI",
+  "author": {
+    "name": "Yassine MANAI"
+  },
+  "license": "MIT",
+  "icon": "media/img.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/placeholder/astroswag"
+  },
+  "homepage": "https://github.com/placeholder/astroswag#readme",
+  "engines": {
+    "vscode": "^1.117.0"
+  },
+  "categories": ["Documentation", "Snippets", "Programming Languages"],
+  "keywords": ["swagger", "openapi", "api", "documentation", "annotations", "rest", "json"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./extention_ia.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "astroswag.generateSwagger",
+        "title": "Generate Swagger Annotations",
+        "category": "AstroSwag"
+      },
+      {
+        "command": "astroswag.openDocumentation",
+        "title": "Open Documentation",
+        "category": "AstroSwag"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "astroswag.generateSwagger",
+        "key": "ctrl+alt+s",
+        "mac": "cmd+alt+s",
+        "when": "editorFocus"
+      }
+    ]
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.117.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "eslint": "^9.39.3",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2"
+  }
+}
