@@ -8,8 +8,8 @@ const path   = require('path');
 
 function activate(context) {
   context.subscriptions.push(
-    vscode.commands.registerCommand('astroswag.generateSwagger', cmdGenerateSwagger),
-    vscode.commands.registerCommand('astroswag.openDocumentation', cmdOpenDocumentation),
+    vscode.commands.registerCommand('astroswagger.generateSwagger', cmdGenerateSwagger),
+    vscode.commands.registerCommand('astroswagger.openDocumentation', cmdOpenDocumentation),
   );
 }
 
@@ -18,19 +18,19 @@ function deactivate() {}
 async function cmdGenerateSwagger() {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
-    vscode.window.showErrorMessage('AstroSwag: No file is currently open.');
+    vscode.window.showErrorMessage('astroswagger: No file is currently open.');
     return;
   }
 
   const filePath = editor.document.uri.fsPath;
   if (!filePath.endsWith('.go')) {
-    vscode.window.showWarningMessage('AstroSwag: Only works on .go files.');
+    vscode.window.showWarningMessage('astroswagger: Only works on .go files.');
     return;
   }
 
   const folders = vscode.workspace.workspaceFolders;
   if (!folders) {
-    vscode.window.showErrorMessage('AstroSwag: No workspace folder open.');
+    vscode.window.showErrorMessage('astroswagger: No workspace folder open.');
     return;
   }
 
@@ -41,19 +41,19 @@ async function cmdGenerateSwagger() {
   const globalRouteMap = buildRouteMap(allGoFiles);
 
   if (Object.keys(globalRouteMap).length === 0) {
-    vscode.window.showWarningMessage('AstroSwag: No gin routes found in this project.');
+    vscode.window.showWarningMessage('astroswagger: No gin routes found in this project.');
     return;
   }
 
   const updated = injectAnnotations(filePath, globalRouteMap, moduleName);
   await vscode.commands.executeCommand('workbench.action.files.revert');
   vscode.window.showInformationMessage(
-    `✅ AstroSwag: ${updated} annotation(s) updated in ${path.basename(filePath)}`
+    `✅ astroswagger: ${updated} annotation(s) updated in ${path.basename(filePath)}`
   );
 }
 
 function cmdOpenDocumentation() {
-  vscode.env.openExternal(vscode.Uri.parse('https://github.com/placeholder/astroswag#readme'));
+  vscode.env.openExternal(vscode.Uri.parse('https://github.com/placeholder/astroswagger#readme'));
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

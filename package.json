@@ -1,11 +1,11 @@
 {
-  "name": "astroswag",
-  "displayName": "AstroSwag - Swagger Annotations",
+  "name": "astroswagger",
+  "displayName": "astroswagger - Swagger Annotations",
   "description": "Automatically generate OpenAPI/Swagger annotations for your code with ease. Speed up API documentation with intelligent annotation generation.",
-  "version": "1.0.1",
-  "publisher": "YassineMANAI",
+  "version": "1.0.0",
+  "publisher": "Asteroidea",
   "author": {
-    "name": "Yassine MANAI"
+    "name": "Yassine MANAI - Asteroidea"
   },
   "license": "MIT",
   "icon": "media/img.png",
@@ -24,19 +24,19 @@
   "contributes": {
     "commands": [
       {
-        "command": "astroswag.generateSwagger",
+        "command": "astroswagger.generateSwagger",
         "title": "Generate Swagger Annotations",
-        "category": "AstroSwag"
+        "category": "astroswagger"
       },
       {
-        "command": "astroswag.openDocumentation",
+        "command": "astroswagger.openDocumentation",
         "title": "Open Documentation",
-        "category": "AstroSwag"
+        "category": "astroswagger"
       }
     ],
     "keybindings": [
       {
-        "command": "astroswag.generateSwagger",
+        "command": "astroswagger.generateSwagger",
         "key": "ctrl+alt+s",
         "mac": "cmd+alt+s",
         "when": "editorFocus"

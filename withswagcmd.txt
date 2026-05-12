@@ -9,8 +9,8 @@ const cp     = require('child_process');   // ← needed for isSwagAvailable
 
 function activate(context) {
   context.subscriptions.push(
-    vscode.commands.registerCommand('astroswag.generateSwagger', cmdGenerateSwagger),
-    vscode.commands.registerCommand('astroswag.openDocumentation', cmdOpenDocumentation),
+    vscode.commands.registerCommand('astroswagger.generateSwagger', cmdGenerateSwagger),
+    vscode.commands.registerCommand('astroswagger.openDocumentation', cmdOpenDocumentation),
   );
 }
 
@@ -19,19 +19,19 @@ function deactivate() {}
 async function cmdGenerateSwagger() {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
-    vscode.window.showErrorMessage('AstroSwag: No file is currently open.');
+    vscode.window.showErrorMessage('astroswagger: No file is currently open.');
     return;
   }
 
   const filePath = editor.document.uri.fsPath;
   if (!filePath.endsWith('.go')) {
-    vscode.window.showWarningMessage('AstroSwag: Only works on .go files.');
+    vscode.window.showWarningMessage('astroswagger: Only works on .go files.');
     return;
   }
 
   const folders = vscode.workspace.workspaceFolders;
   if (!folders) {
-    vscode.window.showErrorMessage('AstroSwag: No workspace folder open.');
+    vscode.window.showErrorMessage('astroswagger: No workspace folder open.');
     return;
   }
 
@@ -43,7 +43,7 @@ async function cmdGenerateSwagger() {
   const globalRouteMap = buildRouteMap(allGoFiles);
 
   if (Object.keys(globalRouteMap).length === 0) {
-    vscode.window.showWarningMessage('AstroSwag: No gin routes found in this project.');
+    vscode.window.showWarningMessage('astroswagger: No gin routes found in this project.');
     return;
   }
 
@@ -52,7 +52,7 @@ async function cmdGenerateSwagger() {
   await vscode.commands.executeCommand('workbench.action.files.revert');
 
   vscode.window.showInformationMessage(
-    `✅ AstroSwag: ${updated} annotation(s) updated in ${path.basename(filePath)}`
+    `✅ astroswagger: ${updated} annotation(s) updated in ${path.basename(filePath)}`
   );
 
   // ── Step 3: run swag fmt && swag init ───────────────────────────────────────
@@ -71,7 +71,7 @@ function cmdOpenDocumentation() {
  * Run `swag fmt` then `swag init` sequentially in the workspace root.
  *
  * Uses VS Code's integrated terminal so the user sees full output and errors.
- * Reuses an existing AstroSwag terminal if one is already open.
+ * Reuses an existing astroswagger terminal if one is already open.
  *
  * @param {string} cwd  — workspace root path
  */
@@ -80,7 +80,7 @@ async function runSwagCommands(cwd) {
 
   if (!swagAvailable) {
     const choice = await vscode.window.showWarningMessage(
-      'AstroSwag: `swag` CLI not found. Install it to auto-regenerate docs.',
+      'astroswagger: `swag` CLI not found. Install it to auto-regenerate docs.',
       'Install Guide',
       'Skip'
     );
@@ -91,9 +91,9 @@ async function runSwagCommands(cwd) {
   }
 
   // Reuse or create a dedicated terminal so we don't spam new panels
-  let terminal = vscode.window.terminals.find(t => t.name === 'AstroSwag');
+  let terminal = vscode.window.terminals.find(t => t.name === 'astroswagger');
   if (!terminal) {
-    terminal = vscode.window.createTerminal({ name: 'AstroSwag', cwd });
+    terminal = vscode.window.createTerminal({ name: 'astroswagger', cwd });
   }
 
   terminal.show(true);  // open panel but keep editor focus

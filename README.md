@@ -1,7 +1,7 @@
-# AstroSwag - Swagger Annotations Generator
+# astroswagger - Swagger Annotations Generator
 
 
-**AstroSwag** is a powerful VS Code extension that automatically generates OpenAPI/Swagger annotations for your code. Save time documenting your APIs and maintain consistency across your project with intelligent annotation generation.
+**astroswagger** is a powerful VS Code extension that automatically generates OpenAPI/Swagger annotations for your code. Save time documenting your APIs and maintain consistency across your project with intelligent annotation generation.
 
 ## Features
 
@@ -15,7 +15,7 @@
 
 1. Open VS Code
 2. Go to Extensions (Ctrl+Shift+X / Cmd+Shift+X)
-3. Search for "AstroSwag"
+3. Search for "astroswagger"
 4. Click Install
 
 Or install directly from [Visual Studio Marketplace](https://marketplace.visualstudio.com/)
@@ -26,13 +26,13 @@ Or install directly from [Visual Studio Marketplace](https://marketplace.visuals
 
 1. Open the file containing your API code
 2. Use the keyboard shortcut: **Ctrl+Alt+S** (Windows/Linux) or **Cmd+Alt+S** (Mac)
-3. Or run the command: **AstroSwag: Generate Swagger Annotations** from the Command Palette (Ctrl+Shift+P)
+3. Or run the command: **astroswagger: Generate Swagger Annotations** from the Command Palette (Ctrl+Shift+P)
 
 The extension will analyze your code and generate appropriate Swagger/OpenAPI annotations.
 
 ### Open Documentation
 
-- Run command: **AstroSwag: Open Documentation** to access the full documentation
+- Run command: **astroswagger: Open Documentation** to access the full documentation
 
 ## Keyboard Shortcuts
 
@@ -51,7 +51,7 @@ The extension will analyze your code and generate appropriate Swagger/OpenAPI an
 
 ## Configuration
 
-AstroSwag works out of the box with minimal configuration required. The extension automatically detects your code structure and generates appropriate annotations.
+astroswagger works out of the box with minimal configuration required. The extension automatically detects your code structure and generates appropriate annotations.
 
 ## Contributing
 

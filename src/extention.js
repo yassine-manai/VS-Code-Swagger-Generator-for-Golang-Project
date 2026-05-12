@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 function activate(context) {
-  const disposable = vscode.commands.registerCommand('astroswag.generateSwagger', async () => {
+  const disposable = vscode.commands.registerCommand('astroswagger.generateSwagger', async () => {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
       vscode.window.showErrorMessage('No file is currently open!');
@@ -12,7 +12,7 @@ function activate(context) {
 
     const filePath = editor.document.uri.fsPath;
     if (!filePath.endsWith('.go')) {
-      vscode.window.showWarningMessage('AstroSwag only works on .go files!');
+      vscode.window.showWarningMessage('astroswagger only works on .go files!');
       return;
     }
 
@@ -30,7 +30,7 @@ function activate(context) {
     const globalRouteMap = buildGlobalRouteMap(allGoFiles);
 
     if (Object.keys(globalRouteMap).length === 0) {
-      vscode.window.showWarningMessage('AstroSwag: No routes found in project.');
+      vscode.window.showWarningMessage('astroswagger: No routes found in project.');
       return;
     }
 
@@ -38,12 +38,12 @@ function activate(context) {
     await vscode.commands.executeCommand('workbench.action.files.revert');
 
     vscode.window.showInformationMessage(
-      `✅ AstroSwag: ${updated} annotation(s) updated in ${path.basename(filePath)}`
+      `✅ astroswagger: ${updated} annotation(s) updated in ${path.basename(filePath)}`
     );
   });
 
-  const docDisposable = vscode.commands.registerCommand('astroswag.openDocumentation', () => {
-    vscode.env.openExternal(vscode.Uri.parse('https://github.com/placeholder/astroswag#readme'));
+  const docDisposable = vscode.commands.registerCommand('astroswagger.openDocumentation', () => {
+    vscode.env.openExternal(vscode.Uri.parse('https://github.com/placeholder/astroswagger#readme'));
   });
 
   context.subscriptions.push(disposable);
