@@ -586,17 +586,14 @@ function injectAnnotations(filePath, routeMap, moduleName) {
       const funcName  = funcMatch[1];
       const routeInfo = routeMap[funcName];
 
-      // Strip any existing swagger comment block sitting directly above
+      // Strip any existing swagger comment block directly above this function
       while (output.length > 0 && output[output.length - 1].trim().startsWith('//')) {
         output.pop();
       }
 
       if (routeInfo) {
-        const body        = extractFuncBody(content, funcName);
-        const pathParams  = extractPathParams(routeInfo.route);
-        const queryParams = extractQueryParams(body);
-        const annotation  = buildAnnotation(funcName, moduleName, routeInfo, pathParams, queryParams);
-
+        const body       = extractFuncBody(content, funcName);
+        const annotation = buildAnnotation(funcName, moduleName, routeInfo, body);
         output.push(...annotation.split('\n'));
         updated++;
       }
@@ -683,37 +680,110 @@ function extractQueryParams(body) {
   return params;
 }
 
-// ─── Annotation builder ───────────────────────────────────────────────────────
+/**
+ * Detect request body binding and extract the struct type name.
+ *
+ * Matches patterns like:
+ *   utils.BindJSON(c, &request)         → looks up var type → "CreateSettingRequest"
+ *   c.ShouldBindJSON(&req)              → looks up var type → "UpdateUserRequest"
+ *   var body CreateSettingRequest       → directly typed   → "CreateSettingRequest"
+ *   request := CreateSettingRequest{}   → directly typed   → "CreateSettingRequest"
+ *
+ * @param {string} body   — raw handler source
+ * @returns {string|null} struct type name, or null if no body binding found
+ */
+function extractBodyParam(body) {
+  // ── Pattern 1: var <name> <StructType>
+  //   var request CreateSettingRequest
+  const varDeclRe = /\bvar\s+([A-Za-z_][A-Za-z0-9_]*)\s+([A-Z][A-Za-z0-9_]*)\b/g;
+  let m;
+  while ((m = varDeclRe.exec(body)) !== null) {
+    const typeName = m[2];
+    // Check this var is actually used in a bind call
+    const varName  = m[1];
+    if (isUsedInBind(body, varName)) return typeName;
+  }
+
+  // ── Pattern 2: <name> := <StructType>{}
+  //   request := CreateSettingRequest{}
+  const shortDeclRe = /([A-Za-z_][A-Za-z0-9_]*)\s*:=\s*([A-Z][A-Za-z0-9_]*)\s*\{/g;
+  while ((m = shortDeclRe.exec(body)) !== null) {
+    const varName  = m[1];
+    const typeName = m[2];
+    if (isUsedInBind(body, varName)) return typeName;
+  }
+
+  // ── Pattern 3: bind call with &<name> where we can infer the type
+  //   from nearby declarations — extract just the struct name from any bind call
+  //   as a last resort by looking for &<VarName> and finding its type anywhere in body
+  const bindRe = /(?:BindJSON|ShouldBindJSON|ShouldBind|BindWith|Bind)\s*\(\s*(?:c\s*,\s*)?&([A-Za-z_][A-Za-z0-9_]*)/g;
+  while ((m = bindRe.exec(body)) !== null) {
+    const varName = m[1];
+    // Try to find any type declaration for this var in the body
+    const typeRe = new RegExp(`\\b${varName}\\b[^=]*[:=][^=]\\s*([A-Z][A-Za-z0-9_]*)`, 'g');
+    const tm = typeRe.exec(body);
+    if (tm) return tm[1];
+  }
+
+  return null;
+}
 
 /**
- * Build a complete swaggo godoc annotation block.
+ * Returns true if varName appears in a bind/decode call in the body.
+ *
+ * @param {string} body
+ * @param {string} varName
+ * @returns {boolean}
+ */
+function isUsedInBind(body, varName) {
+  const re = new RegExp(
+    `(?:BindJSON|ShouldBindJSON|ShouldBind|BindWith|Bind|Decode)\\s*\\([^)]*&${varName}\\b`
+  );
+  return re.test(body);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PHASE 4 — ANNOTATION GENERATION  (Static inference + AI description)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Build a complete swaggo godoc annotation block for one handler.
+ * Both summary and description are statically inferred — instant, no API calls.
  *
  * @param {string} funcName
  * @param {string} moduleName
  * @param {{ method: string, route: string }} routeInfo
- * @param {Array<{ name: string, goType: string, required: boolean }>} pathParams
- * @param {Array<{ name: string, goType: string, required: boolean, defaultVal: string }>} queryParams
+ * @param {string} body   — raw handler function source
  * @returns {string}
  */
-function buildAnnotation(funcName, moduleName, { method, route }, pathParams, queryParams) {
+function buildAnnotation(funcName, moduleName, { method, route }, body) {
   const swaggerRoute = route.replace(/:([a-zA-Z0-9_]+)/g, '{$1}');
+  const pathParams   = extractPathParams(route);
+  const queryParams  = extractQueryParams(body);
+  const bodyType     = extractBodyParam(body);
+
+  const summary     = staticSummary(funcName, method, route);
+  const description = staticDescription(funcName, method, route, pathParams, queryParams);
 
   const pathLines = pathParams.map(p =>
     `//\t@Param\t\t\t${p.name}\tpath\t${p.goType}\ttrue\t"${p.name}"`
   );
-
   const queryLines = queryParams.map(p => {
     const def = p.defaultVal !== '' ? `\tdefault(${p.defaultVal})` : '';
     return `//\t@Param\t\t\t${p.name}\tquery\t${p.goType}\tfalse\t"${p.name}"${def}`;
   });
+  // Body param line: @Param body body StructType true "Request body"
+  const bodyLine = bodyType
+    ? `//\t@Param\t\t\tbody\tbody\t${bodyType}\ttrue\t"Request body"`
+    : null;
 
-  const paramLines = [...pathLines, ...queryLines].join('\n');
+  const paramLines = [...pathLines, ...queryLines, bodyLine].filter(Boolean).join('\n');
 
   return [
     `// ${funcName} godoc`,
     `//`,
-    `//\t@Summary\t\t${funcName}`,
-    `//\t@Description\t${funcName}`,
+    `//\t@Summary\t\t${summary}`,
+    `//\t@Description\t${description}`,
     `//\t@Tags\t\t\t${moduleName}`,
     `//\t@Accept\t\t\tjson`,
     `//\t@Produce\t\tjson`,
@@ -725,6 +795,147 @@ function buildAnnotation(funcName, moduleName, { method, route }, pathParams, qu
     `//\t@Router\t\t\t${swaggerRoute} [${method}]`,
   ].filter(Boolean).join('\n');
 }
+
+// ─── Static summary ───────────────────────────────────────────────────────────
+
+/**
+ * Generate a human-readable one-line summary from the function name and route.
+ *
+ * GetAuditByIDHandler  + GET  /audits/:id  →  "Retrieve audit by ID"
+ * ExportAuditHandler   + POST /audits/export  →  "Export audit"
+ * ListUsersHandler     + GET  /users          →  "List users"
+ *
+ * @param {string} funcName
+ * @param {string} method
+ * @param {string} route
+ * @returns {string}
+ */
+function staticSummary(funcName, method, route) {
+  // ── 1. Split camelCase into tokens, drop trailing noise words
+  const noiseWords  = new Set(['handler', 'controller', 'api', 'endpoint', 'func', 'action']);
+  const tokens      = splitCamelCase(funcName).filter(t => !noiseWords.has(t.toLowerCase()));
+
+  // ── 2. Map the first token (verb) to a clean action word
+  //       Fall back to HTTP method semantics if no verb recognized
+  const verbMap = {
+    get:      'Retrieve', fetch:  'Retrieve', find:   'Retrieve', read: 'Retrieve',
+    list:     'List',     getall: 'List',     fetchall: 'List',
+    create:   'Create',   add:    'Create',   new:    'Create',   register: 'Create',
+    update:   'Update',   edit:   'Update',   modify: 'Update',   patch: 'Update',
+    delete:   'Delete',   remove: 'Delete',   destroy: 'Delete',
+    export:   'Export',
+    import:   'Import',
+    upload:   'Upload',
+    download: 'Download',
+    send:     'Send',
+    check:    'Check',
+    validate: 'Validate',
+    search:   'Search',
+    count:    'Count',
+    login:    'Login',
+    logout:   'Logout',
+    refresh:  'Refresh',
+    verify:   'Verify',
+    approve:  'Approve',
+    reject:   'Reject',
+    assign:   'Assign',
+    revoke:   'Revoke',
+  };
+
+  const methodFallback = {
+    get: 'Retrieve', post: 'Create', put: 'Update',
+    patch: 'Update', delete: 'Delete',
+  };
+
+  let action      = '';
+  let resourceTokens = tokens;
+
+  if (tokens.length > 0) {
+    const first = tokens[0].toLowerCase();
+    if (verbMap[first]) {
+      action         = verbMap[first];
+      resourceTokens = tokens.slice(1);
+    }
+  }
+
+  if (!action) action = methodFallback[method] || 'Process';
+
+  // ── 3. Build resource string from remaining tokens
+  //       "By" + next token → append "by <token>" qualifier
+  let resource  = '';
+  let qualifier = '';
+
+  for (let i = 0; i < resourceTokens.length; i++) {
+    const t = resourceTokens[i];
+    if (t.toLowerCase() === 'by' && i + 1 < resourceTokens.length) {
+      qualifier = 'by ' + resourceTokens.slice(i + 1).join(' ').toLowerCase();
+      break;
+    }
+    resource += (resource ? ' ' : '') + t.toLowerCase();
+  }
+
+  // ── 4. If route has :param, ensure "by <param>" is present
+  const pathParams = [...route.matchAll(/:([a-zA-Z0-9_]+)/g)].map(m => m[1]);
+  if (pathParams.length > 0 && !qualifier) {
+    qualifier = 'by ' + pathParams[pathParams.length - 1].replace(/_/g, ' ');
+  }
+
+  const parts = [action, resource, qualifier].filter(Boolean);
+  return parts.join(' ').trim() || funcName;
+}
+
+/**
+ * Split a camelCase or PascalCase identifier into words.
+ * "GetAuditByIDHandler" → ["Get", "Audit", "By", "ID"]
+ *
+ * @param {string} name
+ * @returns {string[]}
+ */
+function splitCamelCase(name) {
+  return name
+    // Insert space before a capital followed by lowercase (AuditBy → Audit By)
+    .replace(/([A-Z][a-z])/g, ' $1')
+    // Insert space before a capital preceded by lowercase (IDHandler → ID Handler)
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    // Insert space before a run of capitals followed by a capital+lowercase (APIKey → API Key)
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+// ─── Static description (fallback) ───────────────────────────────────────────
+
+/**
+ * Generate a fallback description when the AI call fails.
+ * More detailed than the summary — includes params and auth note.
+ *
+ * @param {string} funcName
+ * @param {string} method
+ * @param {string} route
+ * @param {Array}  pathParams
+ * @param {Array}  queryParams
+ * @returns {string}
+ */
+function staticDescription(funcName, method, route, pathParams, queryParams) {
+  const summary  = staticSummary(funcName, method, route);
+  const parts    = [summary + '.'];
+
+  if (pathParams.length > 0) {
+    const names = pathParams.map(p => p.name).join(', ');
+    parts.push(`Requires path parameter(s): ${names}.`);
+  }
+
+  if (queryParams.length > 0) {
+    const names = queryParams.map(p => p.name).join(', ');
+    parts.push(`Supports query filters: ${names}.`);
+  }
+
+  parts.push('Requires Bearer authentication.');
+  return parts.join(' ');
+}
+
+
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // UTILITIES

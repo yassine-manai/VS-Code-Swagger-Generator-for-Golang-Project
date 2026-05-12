@@ -1,6 +1,5 @@
 # AstroSwag - Swagger Annotations Generator
 
-![AstroSwag Logo](media/img.png)
 
 **AstroSwag** is a powerful VS Code extension that automatically generates OpenAPI/Swagger annotations for your code. Save time documenting your APIs and maintain consistency across your project with intelligent annotation generation.
 
@@ -54,21 +53,10 @@ The extension will analyze your code and generate appropriate Swagger/OpenAPI an
 
 AstroSwag works out of the box with minimal configuration required. The extension automatically detects your code structure and generates appropriate annotations.
 
-## Reporting Issues
-
-Found a bug? Please report it on [GitHub Issues](https://github.com/placeholder/astroswag/issues)
-
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## Changelog
-
-### Version 0.0.1
-- Initial release
-- Basic swagger annotation generation
-- Keyboard shortcuts support
-- Documentation integration
 
 ## License
 
@@ -78,6 +66,3 @@ MIT - See LICENSE file for details
 
 Yassine MANAI
 
----
-
-**Enjoy documenting your APIs with AstroSwag!** 🎉

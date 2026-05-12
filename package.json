@@ -2,7 +2,7 @@
   "name": "astroswag",
   "displayName": "AstroSwag - Swagger Annotations",
   "description": "Automatically generate OpenAPI/Swagger annotations for your code with ease. Speed up API documentation with intelligent annotation generation.",
-  "version": "1.0.2",
+  "version": "1.0.1",
   "publisher": "YassineMANAI",
   "author": {
     "name": "Yassine MANAI"
@@ -11,16 +11,16 @@
   "icon": "media/img.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/placeholder/astroswag"
+    "url": "https://github.com/yassine-manai/VS-Code-Swagger-Generator-for-Golang-Project"
   },
-  "homepage": "https://github.com/placeholder/astroswag#readme",
+  "homepage": "https://github.com/yassine-manai/VS-Code-Swagger-Generator-for-Golang-Project#readme",
   "engines": {
     "vscode": "^1.117.0"
   },
-  "categories": ["Documentation", "Snippets", "Programming Languages"],
-  "keywords": ["swagger", "openapi", "api", "documentation", "annotations", "rest", "json"],
+  "categories": ["Snippets", "Programming Languages"],
+  "keywords": ["swagger", "openapi", "api", "annotations", "rest", "json"],
   "activationEvents": ["onStartupFinished"],
-  "main": "./extention_ia.js",
+  "main": "./extension.js",
   "contributes": {
     "commands": [
       {
